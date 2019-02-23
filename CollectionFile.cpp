@@ -124,7 +124,6 @@ bool CCollectionFile::InitFromLink(const CString& sLink)
 		delete pLink;
 		return false;
 	}
-	delete pLink;
 
 	taglist.Add(new CTag(FT_FILEHASH, pFileLink->GetHashKey()));
 	m_FileIdentifier.SetMD4Hash(pFileLink->GetHashKey());
@@ -140,6 +139,7 @@ bool CCollectionFile::InitFromLink(const CString& sLink)
 		m_FileIdentifier.SetAICHHash(pFileLink->GetAICHHash());
 	}
 
+	delete pLink;
 	return true;
 }
 

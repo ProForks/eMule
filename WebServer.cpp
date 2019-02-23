@@ -1552,10 +1552,8 @@ CString CWebServer::_GetTransferList(const ThreadData& Data)
 
 	CString strTmp = _ParseURL(Data.sURL, _T("sortreverse"));
 	const CString sSort = _ParseURL(Data.sURL, _T("sort")).MakeLower();
-	bool bDirection;
-
 	if (!sSort.IsEmpty()) {
-		bDirection = false;
+		bool bDirection = false;
 		if (sSort == _T("dstate"))
 			pThis->m_Params.DownloadSort = DOWN_SORT_STATE;
 		else if (sSort == _T("dtype"))
@@ -1605,27 +1603,22 @@ CString CWebServer::_GetTransferList(const ThreadData& Data)
 		} else if (sSort == _T("qscore"))
 			pThis->m_Params.QueueSort = QU_SORT_SCORE;
 
-		if (strTmp.IsEmpty()) {
-			if (sSort[0] == _T('d'))
-				pThis->m_Params.bDownloadSortReverse = bDirection;
-			else if (sSort[0] == _T('u'))
-				pThis->m_Params.bUploadSortReverse = bDirection;
-			else if (sSort[0] == _T('q'))
-				pThis->m_Params.bQueueSortReverse = bDirection;
+		if (!strTmp.IsEmpty())
+			bDirection = (strTmp.CompareNoCase(_T("true")) == 0);
+		
+		switch (sSort[0]) {
+		case _T('d'):
+			pThis->m_Params.bDownloadSortReverse = bDirection;
+			break;
+		case _T('u'):
+			pThis->m_Params.bUploadSortReverse = bDirection;
+			break;
+		case _T('q'):
+			pThis->m_Params.bQueueSortReverse = bDirection;
 		}
 	}
 
-	if (!strTmp.IsEmpty()) {
-		bDirection = (strTmp.CompareNoCase(_T("true")) == 0);
-		if (sSort[0] == _T('d'))
-			pThis->m_Params.bDownloadSortReverse = bDirection;
-		else if (sSort[0] == _T('u'))
-			pThis->m_Params.bUploadSortReverse = bDirection;
-		else if (sSort[0] == _T('q'))
-			pThis->m_Params.bQueueSortReverse = bDirection;
-	}
-
-	HTTPTemp = _ParseURL(Data.sURL, _T("showuploadqueue")).MakeLower();
+	HTTPTemp = _ParseURL(Data.sURL, _T("showuploadqueue"));
 	if (HTTPTemp == _T("true"))
 		pThis->m_Params.bShowUploadQueue = true;
 	else if (HTTPTemp == _T("false"))

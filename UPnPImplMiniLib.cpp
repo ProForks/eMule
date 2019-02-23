@@ -143,7 +143,7 @@ void CUPnPImplMiniLib::DeletePorts(bool bSkipLock)
 void CUPnPImplMiniLib::StartDiscovery(uint16 nTCPPort, uint16 nUDPPort, uint16 nTCPWebPort)
 {
 	DebugLog(_T("Using MiniUPnPLib based implementation"));
-	DebugLog(_T("miniupnpc (c) 2006-2018 Thomas Bernard - http://miniupnp.free.fr/"));
+	DebugLog(_T("miniupnpc (c) 2006-2019 Thomas Bernard - http://miniupnp.free.fr/"));
 	GetOldPorts();
 	m_nUDPPort = nUDPPort;
 	m_nTCPPort = nTCPPort;

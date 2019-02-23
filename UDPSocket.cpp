@@ -706,8 +706,9 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 // <-- ZZ:UploadBandWithThrottler (UDP)
 	while (!controlpacket_queue.IsEmpty() && !IsBusy() && sentBytes < maxNumberOfBytesToSend) { // ZZ:UploadBandWithThrottler (UDP)
 		SServerUDPPacket *packet = controlpacket_queue.RemoveHead();
-		if (SendTo(packet->packet, packet->size, packet->dwIP, packet->nPort) >= 0) {
-			sentBytes += packet->size; // ZZ:UploadBandWithThrottler (UDP)
+		int len = SendTo(packet->packet, packet->size, packet->dwIP, packet->nPort);
+		if (len >= 0) {
+			sentBytes += len; // ZZ:UploadBandWithThrottler (UDP)
 			delete[] packet->packet;
 			delete packet;
 		} else
@@ -730,16 +731,16 @@ int CUDPSocket::SendTo(BYTE* lpBuf, int nBufLen, uint32 dwIP, uint16 nPort)
 	//Currently called only locally; sendLocker must be locked by the caller
 	int result = CAsyncSocket::SendTo(lpBuf, nBufLen, nPort, ipstr(dwIP));
 	if (result == SOCKET_ERROR) {
-		DWORD dwError = GetLastError();
+		DWORD dwError = (DWORD)CAsyncSocket::GetLastError();
 		if (dwError == WSAEWOULDBLOCK) {
 			m_bWouldBlock = true;
-			return -1; // blocked
+			return -1; //blocked
 		}
 		if (thePrefs.GetVerbose())
 			theApp.QueueDebugLogLine(false, _T("Error: Server UDP socket: Failed to send packet to %s:%u - %s"), (LPCTSTR)ipstr(dwIP), nPort, (LPCTSTR)GetErrorMessage(dwError, 1));
-		return 0; // error
+		return 0; //error
 	}
-	return result;
+	return result; //success
 }
 
 void CUDPSocket::SendBuffer(uint32 nIP, uint16 nPort, BYTE* pPacket, UINT uSize)

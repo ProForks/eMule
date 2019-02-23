@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+#define ACTION_NONE			0
 #define ACTION_SETUPL		1
 #define ACTION_SETDOWNL		2
 #define ACTION_SOURCESL		3
@@ -36,16 +37,23 @@
 #define DAY_MO_SA		9
 #define DAY_SA_SO		10
 
-struct Schedule_Struct{
-   CString			title;
-   bool				enabled;
-   UINT				day;
-   time_t			time;
-   time_t			time2;
-   CString			values[16];
-   int				actions[16];
-   void ResetActions()	{for (uint8 index=0;index<16;++index) {actions[index]=0;values[index].Empty();}}
-   ~Schedule_Struct() {  }
+struct Schedule_Struct
+{
+	time_t		time;
+	time_t		time2;
+	CString		title;
+	CString		values[16];
+	UINT		day;
+	int			actions[16];
+	bool		enabled;
+	void ResetActions()
+	{
+		for (int i = 16; --i >= 0;) {
+			actions[i] = 0;
+			values[i].Empty();
+		}
+	}
+	~Schedule_Struct() = default;
 };
 
 class CScheduler
@@ -54,18 +62,18 @@ public:
 	CScheduler();
 	~CScheduler();
 
-	INT_PTR	AddSchedule(Schedule_Struct* schedule);
-	void	UpdateSchedule(INT_PTR index, Schedule_Struct* schedule) { if (index<GetCount())schedulelist[index]=schedule;}
-	Schedule_Struct* GetSchedule(INT_PTR index) { return (index<GetCount()) ? schedulelist[index] : NULL; }
+	INT_PTR	AddSchedule(Schedule_Struct *schedule);
+	void	UpdateSchedule(INT_PTR index, Schedule_Struct *schedule) { if (index < GetCount())schedulelist[index] = schedule; }
+	Schedule_Struct* GetSchedule(INT_PTR index)		{ return (index < GetCount()) ? schedulelist[index] : NULL; }
 	void	RemoveSchedule(INT_PTR index);
 	void	RemoveAll();
 	int		LoadFromFile();
 	void	SaveToFile();
-	int		Check(bool forcecheck=false);
-	INT_PTR	GetCount()		{ return schedulelist.GetCount();}
+	int		Check(bool forcecheck = false);
+	INT_PTR	GetCount()								{ return schedulelist.GetCount(); }
 	void	SaveOriginals();
 	void	RestoreOriginals();
-	void	ActivateSchedule(INT_PTR index,bool makedefault=false);
+	void	ActivateSchedule(INT_PTR index, bool makedefault = false);
 
 	uint32	original_upload;
 	uint32	original_download;
@@ -74,6 +82,6 @@ public:
 	UINT	original_sources;
 
 private:
-	CArray<Schedule_Struct*,Schedule_Struct*> schedulelist;
+	CArray<Schedule_Struct*, Schedule_Struct*> schedulelist;
 	int		m_iLastCheckedMinute;
 };

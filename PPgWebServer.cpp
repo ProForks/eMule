@@ -159,7 +159,7 @@ int CertCreate(const struct options &opt)
 		goto exit;
 	}
 
-	//generated the key
+	//generate the key
 	ret = KeyCreate(&issuer_key, &ctr_drbg, opt.issuer_key);
 	if (ret)
 		goto exit;

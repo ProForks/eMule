@@ -274,9 +274,6 @@ public:
 						// Ignore further FD_READ events after FD_CLOSE has been received
 						if (pSocket->m_SocketData.onCloseCalled)
 							break;
-#endif //NOSOCKETSTATES
-
-#ifndef NOSOCKETSTATES
 						if (nErrorCode)
 							pSocket->SetState(aborted);
 #endif //NOSOCKETSTATES
@@ -379,7 +376,7 @@ public:
 						pSocket->OnClose(nErrorCode);
 						break;
 					}
-				} else { //Dispatch notification to the lowest layer
+				} else { //Dispatch notification to the lower layer
 					if (nEvent == FD_READ) {
 						// Ignore further FD_READ events after FD_CLOSE has been received
 						if (pSocket->m_SocketData.onCloseCalled)
@@ -498,12 +495,10 @@ public:
 						pSocket->OnConnect(nErrorCode);
 
 #ifndef NOSOCKETSTATES
-					if (!nErrorCode) {
-						if (((pSocket->m_nPendingEvents&FD_READ) && pSocket->GetState() == connected) && (pSocket->m_lEvent & FD_READ))
-							pSocket->OnReceive(0);
-						if (((pSocket->m_nPendingEvents&FD_FORCEREAD) && pSocket->GetState() == connected) && (pSocket->m_lEvent & FD_READ))
-							pSocket->OnReceive(0);
-						if (((pSocket->m_nPendingEvents&FD_WRITE) && pSocket->GetState() == connected) && (pSocket->m_lEvent & FD_WRITE))
+						if (!nErrorCode && pSocket->GetState() == connected) {
+							if (pSocket->m_nPendingEvents & (FD_READ | FD_FORCEREAD) && pSocket->m_lEvent & FD_READ)
+								pSocket->OnReceive(0);
+							if (pSocket->m_nPendingEvents & FD_WRITE && pSocket->m_lEvent & FD_WRITE)
 							pSocket->OnSend(0);
 					}
 					pSocket->m_nPendingEvents = 0;
@@ -750,7 +745,7 @@ bool CAsyncSocketEx::Create(UINT nSocketPort /*=0*/, int nSocketType /*=SOCK_STR
 
 	if (reusable && nSocketPort != 0) {
 		BOOL value = TRUE;
-		SetSockOpt(SO_REUSEADDR, reinterpret_cast<const void *>(&value), sizeof value);
+		SetSockOpt(SO_REUSEADDR, reinterpret_cast<const void*>(&value), sizeof value);
 	}
 
 	if (!Bind(nSocketPort, sSocketAddress)) {
@@ -1006,23 +1001,22 @@ bool CAsyncSocketEx::Connect(const CString &sHostAddress, UINT nHostPort)
 
 	bool ret = false;
 	for (m_SocketData.nextAddr = m_SocketData.addrInfo; m_SocketData.nextAddr; m_SocketData.nextAddr = m_SocketData.nextAddr->ai_next) {
-		bool newSocket = (m_SocketData.nFamily != AF_UNSPEC);
+		bool newSocket = (m_SocketData.nFamily == AF_UNSPEC);
 		if (newSocket)
 			m_SocketData.hSocket = socket(m_SocketData.nextAddr->ai_family, m_SocketData.nextAddr->ai_socktype, m_SocketData.nextAddr->ai_protocol);
-
 		if (m_SocketData.hSocket == INVALID_SOCKET)
 			continue;
 
-		m_SocketData.nFamily = (ADDRESS_FAMILY)m_SocketData.nextAddr->ai_family;
-		AttachHandle();
+		if (newSocket) {
+			m_SocketData.nFamily = (ADDRESS_FAMILY)m_SocketData.nextAddr->ai_family;
+			AttachHandle();
+		}
 
-		if (AsyncSelect(m_lEvent))
-			if (!m_pFirstLayer || !WSAAsyncSelect(m_SocketData.hSocket, GetHelperWindowHandle(), m_SocketData.nSocketIndex + WM_SOCKETEX_NOTIFY, FD_SIX_EVENTS))
-				if (Bind(m_nSocketPort, m_sSocketAddress)) {
-					ret = Connect(m_SocketData.nextAddr->ai_addr, (int)m_SocketData.nextAddr->ai_addrlen);
-					if (ret || GetLastError() == WSAEWOULDBLOCK)
-						break;
-				}
+		if (AsyncSelect(m_lEvent) && (!newSocket || Bind(m_nSocketPort, m_sSocketAddress))) {
+			ret = Connect(m_SocketData.nextAddr->ai_addr, (int)m_SocketData.nextAddr->ai_addrlen);
+			if (ret || GetLastError() == WSAEWOULDBLOCK)
+				break;
+		}
 
 		if (newSocket) {
 			m_SocketData.nFamily = AF_UNSPEC;
@@ -1265,9 +1259,10 @@ void CAsyncSocketEx::RemoveAllLayers()
 
 int CAsyncSocketEx::OnLayerCallback(std::list<t_callbackMsg> &callbacks)
 {
-	for (std::list<t_callbackMsg>::const_iterator iter = callbacks.begin(); iter != callbacks.end(); ++iter)
-		delete[] iter->str;
-	callbacks.clear();
+	while (callbacks.begin() != callbacks.end()) {
+		delete[] callbacks.begin()->str;
+		callbacks.pop_front();
+	}
 	return 0;
 }
 

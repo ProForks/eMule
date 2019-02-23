@@ -11,6 +11,7 @@
 
 #ifdef XP_BUILD
 #define _WIN32_WINNT _WIN32_WINNT_WINXP
+#define NTDDI_VERSION NTDDI_WINXP
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

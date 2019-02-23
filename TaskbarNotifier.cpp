@@ -36,12 +36,12 @@ static char THIS_FILE[] = __FILE__;
 #define IDT_WAITING			2
 #define IDT_DISAPPEARING	3
 
-#define TASKBAR_X_TOLERANCE 10
-#define TASKBAR_Y_TOLERANCE 10
+#define TASKBAR_X_TOLERANCE 5
+#define TASKBAR_Y_TOLERANCE 5
 
 inline bool NearlyEqual(int a, int b, int iEpsilon)
 {
-	return abs(a - b) < iEpsilon / 2;
+	return abs(a - b) < iEpsilon;
 }
 
 // CTaskbarNotifier
@@ -70,7 +70,7 @@ CTaskbarNotifier::CTaskbarNotifier()
 	, m_nBitmapWidth()
 	, m_nBitmapHeight()
 	, m_bBitmapAlpha()
-	, m_uTextFormat(DT_MODIFYSTRING | DT_WORDBREAK | DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_NOPREFIX)
+	, m_uTextFormat(DT_WORDBREAK | DT_PATH_ELLIPSIS | DT_END_ELLIPSIS | DT_NOPREFIX)
 	, m_bMouseIsOver()
 	, m_bTextSelected()
 	, m_bAutoClose(TRUE)
@@ -112,7 +112,7 @@ CTaskbarNotifier::~CTaskbarNotifier()
 	if (m_hMsImg32Dll)
 		FreeLibrary(m_hMsImg32Dll);
 	while (!m_MessageHistory.IsEmpty())
-		delete static_cast<CTaskbarNotifierHistory *>(m_MessageHistory.RemoveTail());
+		delete static_cast<CTaskbarNotifierHistory*>(m_MessageHistory.RemoveHead());
 }
 
 LRESULT CALLBACK My_AfxWndProc(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
@@ -199,7 +199,7 @@ BOOL CTaskbarNotifier::LoadConfiguration(LPCTSTR pszFilePath)
 	int iBmpTransparentBlue = ini.GetInt(_T("BmpTrasparentBlue"), 255);
 	iBmpTransparentBlue = ini.GetInt(_T("BmpTransparentBlue"), iBmpTransparentBlue);
 
-	CString strFontType = ini.GetString(_T("FontType"), theApp.GetDefaultFontFaceName());
+	const CString &strFontType = ini.GetString(_T("FontType"), theApp.GetDefaultFontFaceName());
 	int iFontSize = ini.GetInt(_T("FontSize"), 8) * 10;
 
 	m_dwTimeToStay = ini.GetInt(_T("TimeToStay"), 4000);
@@ -207,7 +207,7 @@ BOOL CTaskbarNotifier::LoadConfiguration(LPCTSTR pszFilePath)
 	m_dwTimeToHide = ini.GetInt(_T("TimeToHide"), 200);
 
 	CString strBmpFilePath;
-	CString strBmpFileName = ini.GetString(_T("BmpFileName"), _T(""));
+	const CString &strBmpFileName = ini.GetString(_T("BmpFileName"), _T(""));
 	if (!strBmpFileName.IsEmpty())
 		if (PathIsRelative(strBmpFileName))
 			strBmpFilePath.Format(_T("%s%s"), szConfigDir, (LPCTSTR)strBmpFileName);
@@ -317,17 +317,17 @@ void CTaskbarNotifier::SetTextColor(COLORREF crNormalTextColor, COLORREF crSelec
 	RedrawWindow(&m_rcText);
 }
 
-void CTaskbarNotifier::SetTextRect(const RECT& rcText)
+void CTaskbarNotifier::SetTextRect(const RECT &rcText)
 {
 	m_rcText = rcText;
 }
 
-void CTaskbarNotifier::SetCloseBtnRect(const RECT& rcCloseBtn)
+void CTaskbarNotifier::SetCloseBtnRect(const RECT &rcCloseBtn)
 {
 	m_rcCloseBtn = rcCloseBtn;
 }
 
-void CTaskbarNotifier::SetHistoryBtnRect(const RECT& rcHistoryBtn)
+void CTaskbarNotifier::SetHistoryBtnRect(const RECT &rcHistoryBtn)
 {
 	m_rcHistoryBtn = rcHistoryBtn;
 }
@@ -358,7 +358,7 @@ BOOL CTaskbarNotifier::SetBitmap(UINT nBitmapID, int red, int green, int blue)
 	return (m_nBitmapWidth != 0 && m_nBitmapHeight != 0);
 }
 
-BOOL CTaskbarNotifier::SetBitmap(CBitmap* pBitmap, int red, int green, int blue)
+BOOL CTaskbarNotifier::SetBitmap(CBitmap *pBitmap, int red, int green, int blue)
 {
 	m_bitmapBackground.DeleteObject();
 	if (!m_bitmapBackground.Attach(pBitmap->Detach()))
@@ -427,12 +427,13 @@ void CTaskbarNotifier::SetAutoClose(BOOL bAutoClose)
 
 void CTaskbarNotifier::ShowLastHistoryMessage()
 {
-	if (!m_MessageHistory.IsEmpty()) {
-		CTaskbarNotifierHistory *pHistMsg = static_cast<CTaskbarNotifierHistory *>(m_MessageHistory.RemoveHead());
+	if (m_MessageHistory.IsEmpty())
+		Show(GetResString(IDS_TBN_NOMESSAGEHISTORY), TBN_NULL, NULL);
+	else {
+		CTaskbarNotifierHistory *pHistMsg = static_cast<CTaskbarNotifierHistory*>(m_MessageHistory.RemoveHead());
 		Show(pHistMsg->m_strMessage, pHistMsg->m_nMessageType, pHistMsg->m_strLink);
 		delete pHistMsg;
-	} else
-		Show(GetResString(IDS_TBN_NOMESSAGEHISTORY), TBN_NULL, NULL);
+	}
 }
 
 void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, BOOL bAutoClose)
@@ -445,12 +446,6 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, B
 		return;
 	}
 
-	//UINT nScreenHeight; unused
-	UINT nScreenWidth;
-	UINT nEvents;
-	UINT nBitmapSize;
-	CRect rcTaskbar;
-
 	m_strCaption = pszCaption;
 	m_nActiveMessageType = nMsgType;
 	m_strLink = pszLink;
@@ -461,7 +456,7 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, B
 	if (nMsgType != TBN_NULL && nMsgType != TBN_LOG && nMsgType != TBN_IMPORTANTEVENT) {
 		// Add element into string list. Max 5 elements.
 		while (m_MessageHistory.GetCount() >= 5)
-			delete static_cast<CTaskbarNotifierHistory *>(m_MessageHistory.RemoveHead());
+			delete static_cast<CTaskbarNotifierHistory*>(m_MessageHistory.RemoveHead());
 		CTaskbarNotifierHistory *pHistMsg = new CTaskbarNotifierHistory;
 		pHistMsg->m_strMessage = m_strCaption;
 		pHistMsg->m_nMessageType = nMsgType;
@@ -469,13 +464,15 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, B
 		m_MessageHistory.AddTail(pHistMsg);
 	}
 
-	nScreenWidth = ::GetSystemMetrics(SM_CXSCREEN);
-//	nScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+	UINT nScreenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+	//UINT nScreenHeight = ::GetSystemMetrics(SM_CYSCREEN);
 	HWND hWndTaskbar = ::FindWindow(_T("Shell_TrayWnd"), 0);
+	CRect rcTaskbar;
 	::GetWindowRect(hWndTaskbar, &rcTaskbar);
 
 	// Daniel Lohmann: Calculate taskbar position from its window rect. However, on XP  it may be that
 	// the taskbar is slightly larger or smaller than the screen size. Therefore we allow some tolerance here.
+	DWORD nBitmapSize;
 	if (NearlyEqual(rcTaskbar.left, 0, TASKBAR_X_TOLERANCE) && NearlyEqual(rcTaskbar.right, nScreenWidth, TASKBAR_X_TOLERANCE)) {
 		// Taskbar is on top or on bottom
 		m_nTaskbarPlacement = NearlyEqual(rcTaskbar.top, 0, TASKBAR_Y_TOLERANCE) ? ABE_TOP : ABE_BOTTOM;
@@ -490,7 +487,7 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, B
 	// For transparent bitmaps, all animations are disabled.
 	DWORD dwTimeToShow = m_bBitmapAlpha ? 0 : m_dwTimeToShow;
 	if (dwTimeToShow > m_dwTimerPrecision) {
-		nEvents = max(min((dwTimeToShow / m_dwTimerPrecision) / 2, nBitmapSize), 1); //<<-- enkeyDEV(Ottavio84) -Reduced frames of a half-
+		UINT nEvents = maxi(mini((dwTimeToShow / m_dwTimerPrecision) / 2u, nBitmapSize), (DWORD)1); //<<-- enkeyDEV(Ottavio84) -Reduced frames of a half-
 		m_dwShowEvents = dwTimeToShow / nEvents;
 		m_nIncrementShow = nBitmapSize / nEvents;
 	} else {
@@ -502,7 +499,7 @@ void CTaskbarNotifier::Show(LPCTSTR pszCaption, int nMsgType, LPCTSTR pszLink, B
 	// For transparent bitmaps, all animations are disabled.
 	DWORD dwTimeToHide = m_bBitmapAlpha ? 0 : m_dwTimeToHide;
 	if (dwTimeToHide > m_dwTimerPrecision) {
-		nEvents = max(min((dwTimeToHide / m_dwTimerPrecision / 2), nBitmapSize), 1); //<<-- enkeyDEV(Ottavio84) -Reduced frames of a half-
+		UINT nEvents = maxi(mini((dwTimeToHide / m_dwTimerPrecision / 2), nBitmapSize), (DWORD)1); //<<-- enkeyDEV(Ottavio84) -Reduced frames of a half-
 		m_dwHideEvents = dwTimeToHide / nEvents;
 		m_nIncrementHide = nBitmapSize / nEvents;
 	} else {
@@ -608,13 +605,13 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 	if (bm.bmBitsPixel == 32 && m_pfnAlphaBlend) {
 		DWORD dwBitmapBitsSize = GetBitmapBits(hBmp, 0, NULL);
 		if (dwBitmapBitsSize) {
-			pBitmapBits = (BYTE *)malloc(dwBitmapBitsSize);
+			pBitmapBits = (BYTE*)malloc(dwBitmapBitsSize);
 			if (pBitmapBits) {
 				if (GetBitmapBits(hBmp, dwBitmapBitsSize, (LPVOID)pBitmapBits) == (LONG)dwBitmapBitsSize) {
 					const BYTE *pLine = pBitmapBits;
 					int iLines = bm.bmHeight;
 					while (!m_bBitmapAlpha && iLines-- > 0) {
-						const DWORD *pdwPixel = (DWORD *)pLine;
+						const DWORD *pdwPixel = (DWORD*)pLine;
 						for (int x = 0; x < bm.bmWidth; ++x) {
 							if (*pdwPixel++ & 0xFF000000) {
 								m_bBitmapAlpha = true;
@@ -625,7 +622,7 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 					}
 				}
 				if (!m_bBitmapAlpha) {
-					free((void *)pBitmapBits);
+					free((void*)pBitmapBits);
 					pBitmapBits = NULL;
 				}
 			}
@@ -640,7 +637,7 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 	// allocate memory for region data
 	const DWORD MAXBUF = 40;	// size of one block in RECTs (i.e. MAXBUF*sizeof(RECT) in bytes)
 	DWORD cBlocks = 0;			// number of allocated blocks
-	RGNDATAHEADER *pRgnData = (RGNDATAHEADER *)calloc(sizeof(RGNDATAHEADER) + ++cBlocks * MAXBUF * sizeof(RECT), 1);
+	RGNDATAHEADER *pRgnData = (RGNDATAHEADER*)calloc(sizeof(RGNDATAHEADER) + (++cBlocks) * MAXBUF * sizeof(RECT), 1);
 	if (pRgnData) {
 		// fill it by default
 		pRgnData->dwSize = sizeof(RGNDATAHEADER);
@@ -650,13 +647,13 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 		INT iFirstXPos = 0;		// left position of current scan line where mask was found
 		bool bWasFirst = false;	// set when mask was found in current scan line
 
-		const BYTE *pBitmapLine = pBitmapBits != NULL ? pBitmapBits + bm.bmWidthBytes * (bm.bmHeight - 1) : NULL;
+		const BYTE *pBitmapLine = (pBitmapBits != NULL) ? pBitmapBits + bm.bmWidthBytes * (bm.bmHeight - 1) : NULL;
 		for (int y = 0; pRgnData != NULL && y < bm.bmHeight; ++y) {
 			for (int x = 0; x < bm.bmWidth; ++x) {
 				// get color
 				bool bIsMask;
 				if (pBitmapLine)
-					bIsMask = ((((const DWORD *)pBitmapLine)[x] & 0xFF000000) != 0x00000000);
+					bIsMask = ((((DWORD*)pBitmapLine)[x] & 0xFF000000) != 0);
 				else
 					bIsMask = (dcBmp.GetPixel(x, bm.bmHeight - y - 1) != color);
 
@@ -671,7 +668,7 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 
 					// if buffer full reallocate it
 					if (pRgnData->nCount >= cBlocks * MAXBUF) {
-						RGNDATAHEADER *pNewRgnData = (RGNDATAHEADER *)realloc(pRgnData, sizeof(RGNDATAHEADER) + ++cBlocks * MAXBUF * sizeof(RECT));
+						RGNDATAHEADER *pNewRgnData = (RGNDATAHEADER*)realloc(pRgnData, sizeof(RGNDATAHEADER) + (++cBlocks) * MAXBUF * sizeof(RECT));
 						if (pNewRgnData == NULL) {
 							free(pRgnData);
 							pRgnData = NULL;
@@ -695,7 +692,7 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 			hRgn = CreateRectRgn(0, 0, 0, 0);
 			if (hRgn) {
 				LPCRECT pRects = (LPRECT)(pRgnData + 1);
-				for (DWORD i = 0; i < pRgnData->nCount; i++) {
+				for (DWORD i = 0; i < pRgnData->nCount; ++i) {
 					HRGN hr = CreateRectRgn(pRects[i].left, pRects[i].top, pRects[i].right, pRects[i].bottom);
 					if (hr) {
 						VERIFY(CombineRgn(hRgn, hRgn, hr, RGN_OR) != ERROR);
@@ -710,7 +707,7 @@ HRGN CTaskbarNotifier::CreateRgnFromBitmap(HBITMAP hBmp, COLORREF color)
 
 	dcBmp.SelectObject(hOldBmp);
 	dcBmp.DeleteDC();
-	free((void *)pBitmapBits);
+	free((void*)pBitmapBits);
 	ReleaseDC(pDC);
 	return hRgn;
 }
@@ -738,7 +735,7 @@ void CTaskbarNotifier::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// close button clicked
 	if (m_rcCloseBtn.PtInRect(point)) {
-		m_bAutoClose = TRUE;	// set true so next time arrive an autoclose event the popup will autoclose
+		m_bAutoClose = TRUE;	// set true so next time an autoclose event arrives, the popup will autoclose
 								// (when m_bAutoClose is false a "true" event will be ignored until the user
 								// manually close the windows)
 		switch (m_nAnimStatus) {
@@ -756,12 +753,10 @@ void CTaskbarNotifier::OnLButtonUp(UINT nFlags, CPoint point)
 	}
 
 	// cycle history button clicked
-	if (m_rcHistoryBtn.PtInRect(point)) {
-		if (!m_MessageHistory.IsEmpty()) {
-			CTaskbarNotifierHistory *pHistMsg = static_cast<CTaskbarNotifierHistory *>(m_MessageHistory.RemoveHead());
-			Show(pHistMsg->m_strMessage, pHistMsg->m_nMessageType, pHistMsg->m_strLink);
-			delete pHistMsg;
-		}
+	if (m_rcHistoryBtn.PtInRect(point) && !m_MessageHistory.IsEmpty()) {
+		CTaskbarNotifierHistory *pHistMsg = static_cast<CTaskbarNotifierHistory*>(m_MessageHistory.RemoveHead());
+		Show(pHistMsg->m_strMessage, pHistMsg->m_nMessageType, pHistMsg->m_strLink);
+		delete pHistMsg;
 	}
 
 	// message clicked
@@ -774,7 +769,7 @@ void CTaskbarNotifier::OnLButtonUp(UINT nFlags, CPoint point)
 	CWnd::OnLButtonUp(nFlags, point);
 }
 
-LRESULT CTaskbarNotifier::OnMouseHover(WPARAM /*wParam*/, LPARAM lParam)
+LRESULT CTaskbarNotifier::OnMouseHover(WPARAM, LPARAM lParam)
 {
 	if (m_nAnimStatus == IDT_WAITING)
 		KillTimer(IDT_WAITING);
@@ -797,7 +792,7 @@ LRESULT CTaskbarNotifier::OnMouseHover(WPARAM /*wParam*/, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CTaskbarNotifier::OnMouseLeave(WPARAM /*wParam*/, LPARAM /*lParam*/)
+LRESULT CTaskbarNotifier::OnMouseLeave(WPARAM, LPARAM)
 {
 	if (m_bMouseIsOver) {
 		m_bMouseIsOver = FALSE;
@@ -844,7 +839,7 @@ void CTaskbarNotifier::OnPaint()
 	}
 
 	dc.SetBkMode(TRANSPARENT);
-	dc.DrawText(m_strCaption, m_strCaption.GetLength(), m_rcText, m_uTextFormat);
+	dc.DrawText(m_strCaption, m_rcText, m_uTextFormat);
 
 	dc.SelectObject(pOldFont);
 }
@@ -877,14 +872,12 @@ void CTaskbarNotifier::OnTimer(UINT_PTR nIDEvent)
 			} else
 				bKillTimer = true;
 			break;
-
 		case ABE_TOP:
 			if (m_nCurrentHeight < m_nBitmapHeight)
 				m_nCurrentHeight += m_nIncrementShow;
 			else
 				bKillTimer = true;
 			break;
-
 		case ABE_LEFT:
 
 			if (m_nCurrentWidth < m_nBitmapWidth)
@@ -892,7 +885,6 @@ void CTaskbarNotifier::OnTimer(UINT_PTR nIDEvent)
 			else
 				bKillTimer = true;
 			break;
-
 		case ABE_RIGHT:
 			if (m_nCurrentWidth < m_nBitmapWidth) {
 				m_nCurrentPosX -= m_nIncrementShow;
@@ -912,7 +904,6 @@ void CTaskbarNotifier::OnTimer(UINT_PTR nIDEvent)
 		if (m_bAutoClose)
 			SetTimer(IDT_DISAPPEARING, m_dwHideEvents, NULL);
 		break;
-
 	case IDT_DISAPPEARING:
 		m_nAnimStatus = IDT_DISAPPEARING;
 		switch (m_nTaskbarPlacement) {
@@ -923,21 +914,18 @@ void CTaskbarNotifier::OnTimer(UINT_PTR nIDEvent)
 			} else
 				bKillTimer = true;
 			break;
-
 		case ABE_TOP:
 			if (m_nCurrentHeight > 0)
 				m_nCurrentHeight -= m_nIncrementHide;
 			else
 				bKillTimer = true;
 			break;
-
 		case ABE_LEFT:
 			if (m_nCurrentWidth > 0)
 				m_nCurrentWidth -= m_nIncrementHide;
 			else
 				bKillTimer = true;
 			break;
-
 		case ABE_RIGHT:
 			if (m_nCurrentWidth > 0) {
 				m_nCurrentPosX += m_nIncrementHide;

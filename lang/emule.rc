@@ -162,7 +162,7 @@ BEGIN
     IDS_SE                  "Source Exchange"
     IDS_ERR_WRITEERROR      "Unexpected file error while writing %s : %s"
     IDS_ERR_COMPLETIONFAILED
-                            "Unexpected file error while completing ""%s"". File paused, restart eMule for another try to complete"
+                            "Unexpected file error while completing ""%s"". File paused, restart eMule to try again to complete"
     IDS_ERR_DELETEFAILED    "Failed to delete %s, you will need to do this by hand"
     IDS_DOWNLOADDONE        "Finished downloading %s :-)"
     IDS_ERR_DELETE          "Failed to delete %s"

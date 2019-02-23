@@ -3241,6 +3241,13 @@ void CPartFile::DeleteFile()
 		m_bDeleteAfterAlloc = true;
 		return;
 	}
+	if (GetFileOp() != PFOP_NONE) { //hashing, copying, uncompressing
+		if (!m_bDeleteAfterAlloc) {
+			LogWarning(LOG_STATUSBAR, _T("File '%s' will be deleted after the current operation was completed"), (LPCTSTR)GetFileName());
+			m_bDeleteAfterAlloc = true; //reusing flag
+		}
+		return;
+	}
 
 	theApp.sharedfiles->RemoveFile(this, true);
 	theApp.downloadqueue->RemoveFile(this);

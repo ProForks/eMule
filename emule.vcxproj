@@ -60,21 +60,21 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(VC_IncludePath);$(UCRTContentRoot)Include\10.0.16299.0\um\;$(UCRTContentRoot)Include\10.0.16299.0\shared\</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDKDir_81)Include\ucrt\;$(WindowsSDKDir_81)Include\um\;$(WindowsSDKDir_81)Include\shared\</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='_SpecialBootstrapNodes|Win32'">
     <ExtensionsToDeleteOnClean>*.obj%3b*.ilk%3b*.pdb%3b*.tlb%3b*.tli%3b*.tlh%3b*.tmp%3b*.rsp%3b*.bat%3b*.asm%3b$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental>true</LinkIncremental>
     <IntDir>$(Platform)\Debug\</IntDir>
     <OutDir>$(Platform)\Debug\</OutDir>
-    <IncludePath>$(VC_IncludePath);$(UCRTContentRoot)Include\10.0.16299.0\um\;$(UCRTContentRoot)Include\10.0.16299.0\shared\</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDKDir_81)Include\ucrt\;$(WindowsSDKDir_81)Include\um\;$(WindowsSDKDir_81)Include\shared\</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
     <ExtensionsToDeleteOnClean>*.obj%3b*.ilk%3b*.pdb%3b*.tlb%3b*.tli%3b*.tlh%3b*.tmp%3b*.rsp%3b*.bat%3b*.asm%3b$(TargetPath)</ExtensionsToDeleteOnClean>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(UCRTContentRoot)Include\10.0.16299.0\um\;$(UCRTContentRoot)Include\10.0.16299.0\shared\</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDKDir_81)Include\ucrt\;$(WindowsSDKDir_81)Include\um\;$(WindowsSDKDir_81)Include\shared\</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -86,7 +86,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>.;..;id3lib\include;..\mbedtls\include;$(VCToolsInstallDir)atl\include;$(WindowsSdkDir_81)Include\um;$(WindowsSdkDir_81)Include\shared;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;_DEBUG;XP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -96,7 +95,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);$(WindowsSDKDir_81)Include\ucrt\;$(WindowsSDKDir_81)Include\um\;$(WindowsSDKDir_81)Include\shared\;$(VC_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>ADSIId.lib;crypt32.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;..\cryptopp\$(Platform)\$(Configuration)\cryptlib.lib;cximage\$(Platform)\$(Configuration)\cximage.lib;id3lib\libprj\$(Platform)\$(Configuration)\id3lib.lib;..\libpng\projects\visualc\$(Platform)\$(Configuration)\libpng.lib;..\mbedtls\visualc\vs2010\$(Platform)\$(Configuration)\mbedtls.lib;..\miniupnpc\msvc\$(Platform)\$(Configuration)\miniupnpc.lib;..\resizablelib\$(Platform)\$(Configuration)\resizablelib.lib;..\zlib\contrib\vstudio\vc\$(Platform)\$(Configuration)\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -126,7 +125,6 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>.;..;id3lib\include;..\mbedtls\include;$(VCToolsInstallDir)atl\include;$(WindowsSdkDir_81)Include\um;$(WindowsSdkDir_81)Include\shared;$(WindowsSdkDir_81)Include\winnt;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES;_DEBUG;_BOOTSTRAPNODESDAT;XP_BUILD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -135,7 +133,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);$(WindowsSDKDir_81)Include\um\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>ADSIId.lib;crypt32.lib;iphlpapi.lib;version.lib;winmm.lib;ws2_32.lib;..\cryptopp\$(Platform)\Debug\cryptlib.lib;cximage\$(Platform)\Debug\cximage.lib;id3lib\libprj\$(Platform)\Debug\id3lib.lib;..\libpng\projects\visualc\$(Platform)\Debug\libpng.lib;..\mbedtls\visualc\vs2010\$(Platform)\Debug\mbedtls.lib;..\miniupnpc\msvc\$(Platform)\Debug\miniupnpc.lib;..\resizablelib\$(Platform)\Debug\resizablelib.lib;..\zlib\contrib\vstudio\vc\$(Platform)\Debug\zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -169,7 +167,7 @@
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);$(WindowsSDKDir_81)Include\um\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/safeseh</AdditionalOptions>

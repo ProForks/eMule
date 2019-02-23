@@ -432,7 +432,7 @@ void CCreditsThread::InitText()
 
 	m_arCredits.Add(_T("03:00:eMule"));
 	m_arCredits.Add(_T("02:01:Version ") + theApp.m_strCurVersionLong);
-	m_arCredits.Add(_T("01:06:Copyright (C) 2002-2018 Merkur"));
+	m_arCredits.Add(_T("01:06:Copyright (C) 2002-2019 Merkur"));
 	m_arCredits.Add(_T("S:50"));
 	m_arCredits.Add(_T("02:04:Developers"));
 	m_arCredits.Add(_T("S:5"));

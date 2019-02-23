@@ -230,7 +230,7 @@ public:
 					m_pfnMediaInfo_Get = NULL;
 					m_pfnMediaInfo_Count_Get = NULL;
 				}
-				else if (ullVersion < MAKEDLLVERULL(18, 6, 0, 0)) //here ullVersion >= 7.0
+				else if (ullVersion < MAKEDLLVERULL(18, 13, 0, 0)) //here ullVersion >= 7.0
 				{
 					(FARPROC &)m_pfnMediaInfo_New = GetProcAddress(m_hLib, "MediaInfo_New");
 					(FARPROC &)m_pfnMediaInfo_Delete = GetProcAddress(m_hLib, "MediaInfo_Delete");

@@ -137,7 +137,7 @@ void CSplashScreen::OnPaint()
 			_tcscpy(lf.lfFaceName, _T("Arial"));
 			font.CreateFontIndirect(&lf);
 			pOldFont = dc.SelectObject(&font);
-			dc.DrawText(_T("Copyright (C) 2002-2018 Merkur"), &rc, DT_CENTER | DT_NOPREFIX);
+			dc.DrawText(_T("Copyright (C) 2002-2019 Merkur"), &rc, DT_CENTER | DT_NOPREFIX);
 			if (pOldFont)
 				dc.SelectObject(pOldFont);
 			font.DeleteObject();

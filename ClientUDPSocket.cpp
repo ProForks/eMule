@@ -515,7 +515,8 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 				nLen = EncryptSendClient(sendbuffer, nLen, cur_packet->pachTargetClientHashORKadID, cur_packet->bKad, cur_packet->nReceiverVerifyKey, (cur_packet->bKad ? Kademlia::CPrefs::GetUDPVerifyKey(cur_packet->dwIP) : 0u));
 				//DEBUG_ONLY(  AddDebugLogLine(DLP_VERYLOW, false, _T("Sent obfuscated UDP packet to clientIP: %s, Kad: %s, ReceiverKey: %u"), (LPCTSTR)ipstr(cur_packet->dwIP), cur_packet->bKad ? _T("Yes") : _T("No"), cur_packet->nReceiverVerifyKey) );
 			}
-			if (SendTo(sendbuffer, nLen, cur_packet->dwIP, cur_packet->nPort) >= 0) {
+			cLen = SendTo(sendbuffer, nLen, cur_packet->dwIP, cur_packet->nPort);
+			if (cLen >= 0) {
 				sentBytes += nLen; // ZZ:UploadBandWithThrottler (UDP)
 				delete cur_packet->packet;
 				delete cur_packet;
@@ -538,19 +539,22 @@ SocketSentBytes CClientUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend,
 // <-- ZZ:UploadBandWithThrottler (UDP)
 }
 
-int CClientUDPSocket::SendTo(uchar* lpBuf, int nBufLen, uint32 dwIP, uint16 nPort)
+int CClientUDPSocket::SendTo(uchar *lpBuf, int nBufLen, uint32 dwIP, uint16 nPort)
 {
 	// NOTE: *** This function is invoked from a *different* thread!
 	//Currently called only locally; sendLocker must be locked by the caller
 	int result = CAsyncSocket::SendTo(lpBuf, nBufLen, nPort, ipstr(dwIP));
 	if (result == SOCKET_ERROR) {
-		DWORD dwError = GetLastError();
-		if (dwError == WSAEWOULDBLOCK)
+		DWORD dwError = (DWORD)CAsyncSocket::GetLastError();
+		if (dwError == WSAEWOULDBLOCK) {
 			m_bWouldBlock = true;
+			return -1; //blocked
+		}
 		if (thePrefs.GetVerbose())
 			DebugLogError(_T("Error: Client UDP socket, failed to send data to %s:%u: %s"), (LPCTSTR)ipstr(dwIP), nPort, (LPCTSTR)GetErrorMessage(dwError, 1));
+		return 0; //error
 	}
-	return result;
+	return result; //success
 }
 
 bool CClientUDPSocket::SendPacket(Packet *packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar* pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey)
